@@ -1,7 +1,58 @@
-pipeline {
-    agent any
+#!groovy
+properties([buildDiscarder(logRotator(numToKeepStr: '15')), pipelineTriggers([])])
 
-    stage('Deploy to blue or green ?') {
+try {
+    timestamps {
+        runCheckout()
+
+        runPipeline()
+    }
+
+} catch(org.jenkinsci.plugins.workflow.steps.FlowInterruptedException ex){
+    node {
+        echo '============= Exception=' + ex.getMessage()
+        echo '============= Exception class=' + ex.class.toString()
+        if (ut != null) { ut.notifyBuild('ABORTED') }
+    }
+    throw ex
+} catch(Exception ex){
+    node {
+        echo '============= Exception=' + ex.getMessage()
+        echo '============= Exception class=' + ex.class.toString()
+        if (ut != null ) { ut.notifyBuild('FAILURE', ex.getMessage(), true) }
+    }
+    error(ex.getMessage());
+}
+
+/*
+    Checkout of source code, so the pipeline scripts may be loaded
+    and pipelines run and puts it into stash
+ */
+def runCheckout() {
+    node {
+        stage('Checkout') {
+            echo '============= BRANCH=' + BRANCH_NAME
+            echo '============= BUILD NUMBER=' + BUILD_NUMBER
+            deleteDir() // ensure folder is empty and no old files
+            checkout scm
+
+            // Load pipeline scripts into Global variables
+            echo '=Loading pipeline scripts from ops-pipeline'
+
+            echo 'stashing all sources'
+            stash name: 'allsources', includes: '**/*'
+
+            deleteDir() // ensure folder is empty and no old files
+        }
+    }
+}
+
+/*
+    Based on branches starts relevant pipeline
+ */
+def runPipeline() {
+     node {
+        stage('Deploy to blue or green ?') {
             def environment = null
             def environmentCreds = null
             def envToRun = 'green'
@@ -20,4 +71,5 @@ pipeline {
 
             echo "Deploying to ${environment}"
         }
+     }
 }
