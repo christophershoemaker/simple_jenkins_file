@@ -49,7 +49,6 @@ def runCheckout() {
     Based on branches starts relevant pipeline
  */
 def runPipeline() {
-     node {
         stage('Deploy to blue or green ?') {
             def environment = null
             def environmentCreds = null
@@ -69,5 +68,4 @@ def runPipeline() {
 
             echo "Deploying to ${environment}"
         }
-     }
 }
