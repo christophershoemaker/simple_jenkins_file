@@ -12,14 +12,12 @@ try {
     node {
         echo '============= Exception=' + ex.getMessage()
         echo '============= Exception class=' + ex.class.toString()
-        if (ut != null) { ut.notifyBuild('ABORTED') }
     }
     throw ex
 } catch(Exception ex){
     node {
         echo '============= Exception=' + ex.getMessage()
         echo '============= Exception class=' + ex.class.toString()
-        if (ut != null ) { ut.notifyBuild('FAILURE', ex.getMessage(), true) }
     }
     error(ex.getMessage());
 }
